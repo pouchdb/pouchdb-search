@@ -3,13 +3,24 @@
 var lunr = require('lunr');
 
 var Search = function(db) {
+
   function viewQuery(fun, options) {
-  
-  lunrr
-  
-  
-  eval('fun = ' + fun.toString() + ';');
+    var indexes = lunr(fun);
+    //eval('fun = ' + fun.toString() + ';');
+    db.changes({
+      include_docs: true,
+      onChange: function(doc) {
+        // Don't index deleted or design documents
+        if (!('deleted' in doc) && doc.id.indexOf('_design/') !== 0) {
+          indexes.add(doc.doc);
+        }
+      },
+      complete: function() {
+        options.complete(null,indexes.search(options.q));
+      }
+    });
   }
+  
   function httpQuery(name, opts, callback) {
 
     // List of parameters to add to the PUT request
@@ -52,15 +63,20 @@ var Search = function(db) {
       callback = opts;
       opts = {};
     }
+    if(typeof callback === 'function'){
+      opts.complete = callback;
+    }
 
     if (db.type() === 'http') {
     return httpQuery(name, opts, callback);
+  }else{
+    return viewQuery(name, opts);
   }
 }
   return {'search': query};
-};
+}
 
 // Deletion is a noop since we dont store the results of the view
 Search._delete = function() { };
 
-Pouch.plugin('search', Search);
+module.exports = Search;
