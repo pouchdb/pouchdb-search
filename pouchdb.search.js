@@ -1,22 +1,82 @@
 "use strict";
 
 var lunr = require('lunr');
-
+var collate = require('./collate');
 var Search = function(db) {
 
   function viewQuery(fun, options) {
-    var indexes = lunr(fun);
-    //eval('fun = ' + fun.toString() + ';');
+    var lunrfunc = function(){
+      this.field('text');
+      this.ref('id');
+    };
+    var indexes = {};
+    indexes.default = lunr(lunrfunc);
     db.changes({
       include_docs: true,
-      onChange: function(doc) {
+      onChange: function(row) {
         // Don't index deleted or design documents
-        if (!('deleted' in doc) && doc.id.indexOf('_design/') !== 0) {
-          indexes.add(doc.doc);
+        if (row.id.indexOf('_design/') === 0) {
+          return;
+        }else if('deleted' in row){
+          Object.keys(indexes).forEach(function(name){
+            indexes[name].remove(row);
+          });
+          return;
         }
+        var efun;
+        var doc = row.doc;
+        var id = row.id;
+        var text = [];
+        function index(name,value){
+          if(name in indexes){
+            text.push(value);
+          }
+        }
+        if(name in indexes){
+          if(parseInt(doc._rev.split('-')[0],10) === 1){
+            indexes[name].add({id:id,text:text});
+          }else{
+             indexes[name].update({id:id,text:text);
+          }
+        }
+        eval('efun = ' + fun.toString() + ';');
+        efun(doc);
       },
       complete: function() {
-        options.complete(null,indexes.search(options.q));
+        var results = indexes.default.search(options.q).map(function(a){
+          return a.ref;
+        });
+        var finopts = {};
+        finopts.keys = results;
+        if(options.include_docs){
+          finopts.include_docs = options.include_docs;
+        }
+        if(options.conflicts){
+          finopts.conflicts = options.conflicts;
+        }
+        if(options.attachments){
+          finopts.attachments = options.attachments;
+        }
+        var sort = options.sort;
+        if(sort){
+          if(sort.slice(0,1)==='-'){
+            finopts.decending = true;
+            sort = sort.slice(1);
+          }
+          sort = sort.split('<')[0];
+        }
+        db.fetch(finopts,function(err,result){
+          if(err){
+            options.copmlete(err);
+            return;
+          }
+          if(sort){
+            result.rows.sort(a,b){
+              return collate(a[sort],b[sort]);
+            }
+            options.complete(null,result);
+          }
+        });
       }
     });
   }
