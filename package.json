@@ -1,6 +1,6 @@
 {
   "name": "pouchdb-search",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "solr search for pouchdb",
   "main": "pouchdb.search.js",
   "scripts": {
@@ -11,7 +11,7 @@
   ],
   "author": "Calvin W. Metcalf",
   "license": "MIT",
-  "repository":"git://github.com/calvinmetcalf/pouchdb-search.git",
+  "repository": "git://github.com/calvinmetcalf/pouchdb-search.git",
   "dependencies": {
     "lunr": "~0.4.2"
   },
