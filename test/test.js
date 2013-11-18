@@ -49,29 +49,30 @@ var doc4 = {
 Pouch.plugin('Search',require('../pouchdb.search'));
 describe('pouch search',function(){
 	describe('function',function(){
-							it('basic',function(done){
-		Pouch.destroy('basic',function(){
-		var db = Pouch('basic');
-		db.put(doc1,function(err){
-			db.put(doc2,function(err){
-				db.put(doc3,function(err){
-				db.put(doc4,function(err){
-			db.search(function(doc){
-				if(doc.desc){
-					index('default',doc.desc);
-				}
-			},{q:'land'},function(err,result){
-				result.total_rows.should.equal(1);
-				done();
-			});
-
-		});})});
+		it('basic',function(done){
+			Pouch.destroy('basic',function(){
+				var db = Pouch('basic');
+				db.put(doc1,function(err){
+					db.put(doc2,function(err){
+						db.put(doc3,function(err){
+							db.put(doc4,function(err){
+								db.search(function(doc){
+									if(doc.desc){
+										index('default',doc.desc);
+									}
+								},{q:'land'},function(err,result){
+									result.total_rows.should.equal(1);
+									done();
+								});
+							});
+						});
+					});
 				});
 			});
 		});
 		it('should work with a doc',function(done){
 			var db = Pouch('basic');
-db.search("find/things",{q:'determination'},function(err,result){
+			db.search("find/things",{q:'determination'},function(err,result){
 				result.total_rows.should.equal(1);
 				done();
 			});

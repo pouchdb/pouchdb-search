@@ -40,50 +40,50 @@ var Search = function(db) {
           if(parseInt(doc._rev.split('-')[0],10) === 1){
             indexes.default.add({id:id,text:text.join(' ')});
           }else{
-             indexes.default.update({id:id,text:text.join(' ')});
-          }
-        }
-      },
-      complete: function() {
-        var results = indexes.default.search(options.q).map(function(a){
-          return a.ref;
-        });
-        var finopts = {};
-        finopts.keys = results;
-        if(options.include_docs){
-          finopts.include_docs = options.include_docs;
-        }
-        if(options.conflicts){
-          finopts.conflicts = options.conflicts;
-        }
-        if(options.attachments){
-          finopts.attachments = options.attachments;
-        }
-        var sort = options.sort;
-        if(sort){
-          if(sort.slice(0,1)==='-'){
-            finopts.decending = true;
-            sort = sort.slice(1);
-          }
-          sort = sort.split('<')[0];
-        }
-        db.allDocs(finopts,function(err,result){
-          if(err){
-            options.copmlete(err);
-            return;
-          }
-          if(sort){
-            result.rows.sort(function(a,b){
-              return collate(a[sort],b[sort]);
-            });
-          }
-          options.complete(null,result);
-        });
+           indexes.default.update({id:id,text:text.join(' ')});
+         }
+       }
+     },
+     complete: function() {
+      var results = indexes.default.search(options.q).map(function(a){
+        return a.ref;
+      });
+      var finopts = {};
+      finopts.keys = results;
+      if(options.include_docs){
+        finopts.include_docs = options.include_docs;
       }
-    });
-  }
-  
-  function httpQuery(name, opts, callback) {
+      if(options.conflicts){
+        finopts.conflicts = options.conflicts;
+      }
+      if(options.attachments){
+        finopts.attachments = options.attachments;
+      }
+      var sort = options.sort;
+      if(sort){
+        if(sort.slice(0,1)==='-'){
+          finopts.decending = true;
+          sort = sort.slice(1);
+        }
+        sort = sort.split('<')[0];
+      }
+      db.allDocs(finopts,function(err,result){
+        if(err){
+          options.copmlete(err);
+          return;
+        }
+        if(sort){
+          result.rows.sort(function(a,b){
+            return collate(a[sort],b[sort]);
+          });
+        }
+        options.complete(null,result);
+      });
+    }
+  });
+}
+
+function httpQuery(name, opts, callback) {
 
     // List of parameters to add to the PUT request
     var params = [];
@@ -113,11 +113,11 @@ var Search = function(db) {
     params = params.join('&');
     params = params === '' ? '' : '?' + params;
 
-      var parts = name.split('/');
-      db.request({
-        method: 'GET',
-        url: '_design/' + parts[0] + '/_search/' + parts[1] + params
-      }, callback);
+    var parts = name.split('/');
+    db.request({
+      method: 'GET',
+      url: '_design/' + parts[0] + '/_search/' + parts[1] + params
+    }, callback);
   }
 
   function query(name, opts, callback) {
