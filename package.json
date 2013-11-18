@@ -4,17 +4,22 @@
   "description": "solr search for pouchdb",
   "main": "pouchdb.search.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test/test.js"
   },
   "keywords": [
     "pouchdb"
   ],
   "author": "Calvin W. Metcalf",
   "license": "MIT",
+  "repository":"git://github.com/calvinmetcalf/pouchdb-search.git",
   "dependencies": {
     "lunr": "~0.4.2"
   },
   "peerDependencies": {
     "pouchdb": "0.0.14"
+  },
+  "devDependencies": {
+    "chai": "~1.8.1",
+    "mocha": "~1.14.0"
   }
 }

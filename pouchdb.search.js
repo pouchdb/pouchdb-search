@@ -14,6 +14,7 @@ var Search = function(db) {
     db.changes({
       include_docs: true,
       onChange: function(row) {
+
         // Don't index deleted or design documents
         if (row.id.indexOf('_design/') === 0) {
           return;
@@ -27,20 +28,21 @@ var Search = function(db) {
         var doc = row.doc;
         var id = row.id;
         var text = [];
+        var name;
         function index(name,value){
           if(name in indexes){
             text.push(value);
           }
         }
-        if(name in indexes){
-          if(parseInt(doc._rev.split('-')[0],10) === 1){
-            indexes[name].add({id:id,text:text});
-          }else{
-             indexes[name].update({id:id,text:text);
-          }
-        }
         eval('efun = ' + fun.toString() + ';');
         efun(doc);
+        if('default' in indexes){
+          if(parseInt(doc._rev.split('-')[0],10) === 1){
+            indexes.default.add({id:id,text:text.join(' ')});
+          }else{
+             indexes.default.update({id:id,text:text.join(' ')});
+          }
+        }
       },
       complete: function() {
         var results = indexes.default.search(options.q).map(function(a){
@@ -65,17 +67,17 @@ var Search = function(db) {
           }
           sort = sort.split('<')[0];
         }
-        db.fetch(finopts,function(err,result){
+        db.allDocs(finopts,function(err,result){
           if(err){
             options.copmlete(err);
             return;
           }
           if(sort){
-            result.rows.sort(a,b){
+            result.rows.sort(function(a,b){
               return collate(a[sort],b[sort]);
-            }
-            options.complete(null,result);
+            });
           }
+          options.complete(null,result);
         });
       }
     });
@@ -128,11 +130,27 @@ var Search = function(db) {
     }
 
     if (db.type() === 'http') {
-    return httpQuery(name, opts, callback);
-  }else{
-    return viewQuery(name, opts);
+      return httpQuery(name, opts, callback);
+    }else if(typeof name ==='function'){
+      return viewQuery(name, opts);
+    }
+    var parts = name.split('/');
+    db.get('_design/' + parts[0], function(err, doc) {
+      if (err) {
+        if (callback){
+          callback(err);
+        }
+        return;
+      }
+      if (!doc.indexes[parts[1]]) {
+        if (callback) {
+          callback({ error: 'not_found', reason: 'missing_named_view' });
+        }
+        return;
+      }
+      return viewQuery(doc.indexes[parts[1]].index,opts);
+    });
   }
-}
   return {'search': query};
 }
 
