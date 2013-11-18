@@ -40,7 +40,7 @@ var doc4 = {
 		things:{
 			index:function(doc){
 				if(doc.desc){
-					index('default',doc.desc);
+					index('default',doc.text);
 				}
 			}.toString()
 		}
@@ -72,8 +72,8 @@ describe('pouch search',function(){
 		});
 		it('should work with a doc',function(done){
 			var db = Pouch('basic');
-			db.search("find/things",{q:'determination'},function(err,result){
-				result.total_rows.should.equal(1);
+			db.search("find/things",{q:'freehold'},function(err,result){
+				result.total_rows.should.equal(2);
 				done();
 			});
 		})
