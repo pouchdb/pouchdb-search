@@ -136,45 +136,40 @@ function httpQuery(name, opts) {
     });
   }
 
-  function query(name, opts, callback) {
-    if (typeof opts === 'function') {
-      callback = opts;
-      opts = {};
-    }
-    if(typeof callback !== 'function'){
-      callback = function(err,resp){
-        if(err){
-          throw err;
-        }else{
-          return resp;
-        }
-      }
-    }
+  function query(name, opts) {
     if (db.type() === 'http') {
-      return httpQuery(name, opts).then(function(result){
-        return callback(null,result);
-      },callback);
+      return httpQuery(name, opts);
     }else if(typeof name ==='function'){
-      return viewQuery(name, {default:lunr(lunrfunc)}, opts).then(function(result){
-        return callback(null,result);
-      },callback);
+      return viewQuery(name, {default:lunr(lunrfunc)}, opts);
     }
     var parts = name.split('/');
     return get('_design/' + parts[0]).then(function(doc) {
       if (!doc.indexes[parts[1]]) {
-          return callback({
+          throw {
             error: 'not_found', 
             eason: 'missing_named_view'
-          });
+          };
       }
       return viewQuery(doc.indexes[parts[1]].index,{
         default:lunr(lunrfunc)
-      },opts).then(function(result){
-        return callback(null,result);
-      },callback);;
+      },opts);
     });
   }
-  return {'search': query};
+  function search(name, opts, callback){
+    if (typeof opts === 'function') {
+      callback = opts;
+      opts = {};
+    }
+    var resp = query(name,opts);
+    if(typeof callback === 'function'){
+      return resp.then(function(answer){
+        return callback(null,answer);
+      },callback);
+    }else{
+      return resp;
+    }
+  }
+  return {'search': search};
 }
 
 // Deletion is a noop since we dont store the results of the view
