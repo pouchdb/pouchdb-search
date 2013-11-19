@@ -1,6 +1,7 @@
 var chai = require('chai');
 chai.should();
 var Pouch = require('pouchdb');
+var denodify = require('lie-denodify');
 var doc1 = {
 	"_id": "c240s1",
 	"chapter": "240",
@@ -46,36 +47,69 @@ var doc4 = {
 		}
 	}
 }
+var destroy = denodify(Pouch.destroy);
+var create = denodify(Pouch);
 Pouch.plugin('Search',require('../pouchdb.search'));
 describe('pouch search',function(){
 	describe('function',function(){
 		it('basic',function(done){
-			Pouch.destroy('basic',function(){
-				var db = Pouch('basic');
-				db.put(doc1,function(err){
-					db.put(doc2,function(err){
-						db.put(doc3,function(err){
-							db.put(doc4,function(err){
-								db.search(function(doc){
-									if(doc.desc){
-										index('default',doc.desc);
-									}
-								},{q:'land'},function(err,result){
-									result.total_rows.should.equal(1);
-									done();
-								});
-							});
-						});
-					});
-				});
-			});
-		});
+			destroy('.db_basic').then(function(){
+        return create('.db_basic');
+      }).then(function(db){
+        var put = denodify(db.put);
+        return put(doc1).then(function(){
+          return put(doc2);
+        }).then(function(){
+          return put(doc3);
+        }).then(function(){
+          return put(doc4);
+        }).then(function(){
+          return denodify(db.search);
+        });
+      }).then(function(search){
+        return search(function(doc){
+          if(doc.desc){
+            index('default',doc.desc);
+          }
+        },{q:'land'}).then(function(result){
+          result.total_rows.should.equal(1);
+          result.rows[0].id.should.equal('c240s10A');
+          return;
+        });
+      }).then(done,done);
+    });
 		it('should work with a doc',function(done){
-			var db = Pouch('basic');
-			db.search("find/things",{q:'freehold'},function(err,result){
-				result.total_rows.should.equal(2);
-				done();
-			});
-		})
-	});
+			create('.db_basic').then(function(db){
+        return denodify(db.search);
+      }).then(function(search){
+        return search("find/things",{q:'freehold'}).then(function(result){
+          result.total_rows.should.equal(2);
+          result.rows.map(function(v){
+            return v.id;
+          }).should.deep.equal(["c240s10A","c240s1"]);
+          return;
+        });
+      }).then(done,done);
+    });
+    it('should work with an updated doc',function(done){
+      create('.db_basic').then(function(db){
+        var get = denodify(db.get);
+        var put = denodify(db.put);
+        return get('c240s1').then(function(doc){
+          doc.text = 'no';
+          return db.put(doc);
+        }).then(function(){
+          return denodify(db.search);
+        });
+      }).then(function(search){
+        return search("find/things",{q:'freehold'}).then(function(result){
+          result.total_rows.should.equal(1);
+          result.rows.map(function(v){
+            return v.id;
+          }).should.deep.equal(["c240s10A"]);
+          return;
+        });
+      }).then(done,done);
+    })
+  });
 });

@@ -3,7 +3,6 @@
 var lunr = require('lunr');
 var collate = require('./collate');
 var Search = function(db) {
-
   function viewQuery(fun, options) {
     var lunrfunc = function(){
       this.field('text');
@@ -20,29 +19,36 @@ var Search = function(db) {
           return;
         }else if('deleted' in row){
           Object.keys(indexes).forEach(function(name){
-            indexes[name].remove(row);
+            if(indexes[name].documentStore.has(row.id)){
+              indexes[name].remove(row);
+            }
           });
           return;
         }
         var efun;
         var doc = row.doc;
         var id = row.id;
-        var text = [];
+        var text = {
+          default:[]
+        };
         var name;
         function index(name,value){
           if(name in indexes){
-            text.push(value);
+            text[name].push(value);
+          }else{
+            text[name]=[];
+            indexes[name]=lunr(lunrfunc);
           }
         }
         eval('efun = ' + fun.toString() + ';');
         efun(doc);
-        if('default' in indexes){
-          if(parseInt(doc._rev.split('-')[0],10) === 1){
-            indexes.default.add({id:id,text:text.join(' ')});
+        Object.keys(text).forEach(function(name){
+          if(indexes[name].documentStore.has(id)) {
+            indexes[name].update({id:id,text:text[name].join(' ')});
           }else{
-           indexes.default.update({id:id,text:text.join(' ')});
+            indexes[name].add({id:id,text:text[name].join(' ')});
          }
-       }
+       });
      },
      complete: function() {
       var results = indexes.default.search(options.q).map(function(a){
