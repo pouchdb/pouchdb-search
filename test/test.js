@@ -40,9 +40,12 @@ var doc4 = {
 	indexes:{
 		things:{
 			index:function(doc){
-				if(doc.desc){
+				if(doc.text){
 					index('default',doc.text);
 				}
+        if(doc.desc){
+          index('title',doc.desc);
+        }
 			}.toString()
 		}
 	}
@@ -110,6 +113,19 @@ describe('pouch search',function(){
           return;
         });
       }).then(done,done);
-    })
+    });
+    it('should work with a more complex thing',function(done){
+      create('.db_basic').then(function(db){
+        return denodify(db.search);
+      }).then(function(search){
+        return search("find/things",{q:'title:rem'}).then(function(result){
+          result.total_rows.should.equal(1);
+          result.rows.map(function(v){
+            return v.id;
+          }).should.deep.equal(["c240s10"]);
+          return;
+        });
+      }).then(done,done);
+    });;
   });
 });

@@ -33,12 +33,13 @@ var Search = function(db) {
         };
         var name;
         function index(name,value){
-          if(name in indexes){
-            text[name].push(value);
-          }else{
-            text[name]=[];
+          if(!(name in indexes)){
             indexes[name]=lunr(lunrfunc);
           }
+          if(!(name in text)){
+            text[name]=[];
+          }
+          text[name].push(value);
         }
         eval('efun = ' + fun.toString() + ';');
         efun(doc);
@@ -51,7 +52,14 @@ var Search = function(db) {
        });
      },
      complete: function() {
-      var results = indexes.default.search(options.q).map(function(a){
+      var q = options.q;
+      var index = 'default';
+      if(~q.indexOf(':')){
+        q = q.split(':');
+        index = q[0];
+        q=q[1];
+      }
+      var results = indexes[index].search(q).map(function(a){
         return a.ref;
       });
       var finopts = {};

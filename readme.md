@@ -13,4 +13,4 @@ db.search('design/name',options,callback);
 In prgress, known issues:
 
 - like the pouch mapreduce and spatial plugins it does reindex with each query
-- only supports default indexes at the moment.
+- ~~only supports default indexes at the moment.~~ Only supports queries from one index at a time
