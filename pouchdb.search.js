@@ -2,18 +2,21 @@
 
 var lunr = require('lunr');
 var collate = require('./collate');
+var lie = require('lie');
+var denodify = require('lie-denodify');
+function lunrfunc(){
+  this.field('text');
+  this.ref('id');
+};
 var Search = function(db) {
-  function viewQuery(fun, options) {
-    var lunrfunc = function(){
-      this.field('text');
-      this.ref('id');
-    };
-    var indexes = {};
-    indexes.default = lunr(lunrfunc);
-    db.changes({
-      include_docs: true,
-      onChange: function(row) {
-
+  var get = denodify(db.get);
+  var request = denodify(db.request);
+  function viewQuery(fun, indexes, options) {
+    return lie(function(yes,no){
+      indexes.default = lunr(lunrfunc);
+      db.changes({
+        include_docs: true,
+        onChange: function(row) {
         // Don't index deleted or design documents
         if (row.id.indexOf('_design/') === 0) {
           return;
@@ -48,57 +51,56 @@ var Search = function(db) {
             indexes[name].update({id:id,text:text[name].join(' ')});
           }else{
             indexes[name].add({id:id,text:text[name].join(' ')});
-         }
-       });
-     },
-     complete: function() {
-      var q = options.q;
-      var index = 'default';
-      if(~q.indexOf(':')){
-        q = q.split(':');
-        index = q[0];
-        q=q[1];
-      }
-      var results = indexes[index].search(q).map(function(a){
-        return a.ref;
-      });
-      var finopts = {};
-      finopts.keys = results;
-      if(options.include_docs){
-        finopts.include_docs = options.include_docs;
-      }
-      if(options.conflicts){
-        finopts.conflicts = options.conflicts;
-      }
-      if(options.attachments){
-        finopts.attachments = options.attachments;
-      }
-      var sort = options.sort;
-      if(sort){
-        if(sort.slice(0,1)==='-'){
-          finopts.decending = true;
-          sort = sort.slice(1);
+          }
+        });
+      },
+      complete: function() {
+        var q = options.q;
+        var index = 'default';
+        if(~q.indexOf(':')){
+          q = q.split(':');
+          index = q[0];
+          q=q[1];
         }
-        sort = sort.split('<')[0];
-      }
-      db.allDocs(finopts,function(err,result){
-        if(err){
-          options.copmlete(err);
-          return;
+        var results = indexes[index].search(q).map(function(a){
+          return a.ref;
+        });
+        var finopts = {};
+        finopts.keys = results;
+        if(options.include_docs){
+          finopts.include_docs = options.include_docs;
         }
+        if(options.conflicts){
+          finopts.conflicts = options.conflicts;
+        }
+        if(options.attachments){
+          finopts.attachments = options.attachments;
+        }
+        var sort = options.sort;
         if(sort){
-          result.rows.sort(function(a,b){
-            return collate(a[sort],b[sort]);
-          });
+          if(sort.slice(0,1)==='-'){
+            finopts.decending = true;
+            sort = sort.slice(1);
+          }
+          sort = sort.split('<')[0];
         }
-        options.complete(null,result);
-      });
-    }
-  });
+        db.allDocs(finopts,function(err,result){
+          if(err){
+            return no(err);
+          }
+          if(sort){
+            result.rows.sort(function(a,b){
+              return collate(a[sort],b[sort]);
+            });
+          }
+          yes(result);
+        });
+      }
+    });
+});
 }
 
-function httpQuery(name, opts, callback) {
-
+function httpQuery(name, opts) {
     // List of parameters to add to the PUT request
     var params = [];
     if (typeof opts.q !== 'undefined') {
@@ -128,10 +130,10 @@ function httpQuery(name, opts, callback) {
     params = params === '' ? '' : '?' + params;
 
     var parts = name.split('/');
-    db.request({
+    return request({
       method: 'GET',
       url: '_design/' + parts[0] + '/_search/' + parts[1] + params
-    }, callback);
+    });
   }
 
   function query(name, opts, callback) {
@@ -139,30 +141,37 @@ function httpQuery(name, opts, callback) {
       callback = opts;
       opts = {};
     }
-    if(typeof callback === 'function'){
-      opts.complete = callback;
+    if(typeof callback !== 'function'){
+      callback = function(err,resp){
+        if(err){
+          throw err;
+        }else{
+          return resp;
+        }
+      }
     }
-
     if (db.type() === 'http') {
-      return httpQuery(name, opts, callback);
+      return httpQuery(name, opts).then(function(result){
+        return callback(null,result);
+      },callback);
     }else if(typeof name ==='function'){
-      return viewQuery(name, opts);
+      return viewQuery(name, {default:lunr(lunrfunc)}, opts).then(function(result){
+        return callback(null,result);
+      },callback);
     }
     var parts = name.split('/');
-    db.get('_design/' + parts[0], function(err, doc) {
-      if (err) {
-        if (callback){
-          callback(err);
-        }
-        return;
-      }
+    return get('_design/' + parts[0]).then(function(doc) {
       if (!doc.indexes[parts[1]]) {
-        if (callback) {
-          callback({ error: 'not_found', reason: 'missing_named_view' });
-        }
-        return;
+          return callback({
+            error: 'not_found', 
+            eason: 'missing_named_view'
+          });
       }
-      return viewQuery(doc.indexes[parts[1]].index,opts);
+      return viewQuery(doc.indexes[parts[1]].index,{
+        default:lunr(lunrfunc)
+      },opts).then(function(result){
+        return callback(null,result);
+      },callback);;
     });
   }
   return {'search': query};

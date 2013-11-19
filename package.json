@@ -13,15 +13,15 @@
   "license": "MIT",
   "repository": "git://github.com/calvinmetcalf/pouchdb-search.git",
   "dependencies": {
-    "lunr": "~0.4.2"
+    "lunr": "~0.4.2",
+    "lie-denodify": "~0.1.1",
+    "lie": "~2.3.0"
   },
   "peerDependencies": {
     "pouchdb": "0.0.14"
   },
   "devDependencies": {
     "chai": "~1.8.1",
-    "mocha": "~1.14.0",
-    "lie-denodify": "~0.1.1",
-    "lie": "~2.3.0"
+    "mocha": "~1.14.0"
   }
 }

@@ -116,7 +116,7 @@ describe('pouch search',function(){
     });
     it('should work with a more complex thing',function(done){
       create('.db_basic').then(function(db){
-        return denodify(db.search);
+        return db.search;
       }).then(function(search){
         return search("find/things",{q:'title:rem'}).then(function(result){
           result.total_rows.should.equal(1);
