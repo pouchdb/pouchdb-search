@@ -56,8 +56,10 @@ Pouch.plugin('Search',require('../pouchdb.search'));
 describe('pouch search',function(){
 	describe('function',function(){
 		it('basic',function(done){
-			destroy('.db_basic').then(function(){
-        return create('.db_basic');
+			destroy('dbbasic').then(function(){
+        return create('dbbasic');
+      },function(){
+        return create('dbbasic');
       }).then(function(db){
         var put = denodify(db.put);
         return put(doc1).then(function(){
@@ -82,7 +84,7 @@ describe('pouch search',function(){
       }).then(done,done);
     });
 		it('should work with a doc',function(done){
-			create('.db_basic').then(function(db){
+			create('dbbasic').then(function(db){
         return denodify(db.search);
       }).then(function(search){
         return search("find/things",{q:'freehold'}).then(function(result){
@@ -95,7 +97,7 @@ describe('pouch search',function(){
       }).then(done,done);
     });
     it('should work with an updated doc',function(done){
-      create('.db_basic').then(function(db){
+      create('dbbasic').then(function(db){
         var get = denodify(db.get);
         var put = denodify(db.put);
         return get('c240s1').then(function(doc){
@@ -115,7 +117,7 @@ describe('pouch search',function(){
       }).then(done,done);
     });
     it('should work with a more complex thing',function(done){
-      create('.db_basic').then(function(db){
+      create('dbbasic').then(function(db){
         return db.search;
       }).then(function(search){
         return search("find/things",{q:'title:rem'}).then(function(result){
