@@ -9,6 +9,9 @@ function lunrfunc(){
   this.ref('id');
 };
 var Search = function(db) {
+  if(!(this instanceof Search)){
+    return new Search(db);
+  }
   var get = denodify(db.get);
   var request = denodify(db.request);
   function viewQuery(fun, indexes, options) {
@@ -155,7 +158,7 @@ function httpQuery(name, opts) {
       },opts);
     });
   }
-  function search(name, opts, callback){
+  this.search = function(name, opts, callback){
     if (typeof opts === 'function') {
       callback = opts;
       opts = {};
@@ -169,7 +172,6 @@ function httpQuery(name, opts) {
       return resp;
     }
   }
-  return {'search': search};
 }
 
 // Deletion is a noop since we dont store the results of the view
