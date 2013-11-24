@@ -1,7 +1,7 @@
 "use strict";
 
 var lunr = require('lunr');
-var collate = require('./collate');
+var collate = require('pouchdb-collate');
 var lie = require('lie');
 var denodify = require('lie-denodify');
 function lunrfunc(){
