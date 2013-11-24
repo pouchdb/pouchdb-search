@@ -16,7 +16,7 @@
     "lunr": "~0.4.2",
     "lie-denodify": "~0.1.1",
     "lie": "~2.3.0",
-    "pouchdb-collate": "0.0.0"
+    "pouchdb-collate": "0.1.0"
   },
   "peerDependencies": {
     "pouchdb": "0.0.14"
