@@ -2,6 +2,7 @@ var chai = require('chai');
 chai.should();
 var Pouch = require('pouchdb');
 var denodify = require('lie-denodify');
+var root = require('../config.json').root;
 var doc1 = {
 	"_id": "c240s1",
 	"chapter": "240",
@@ -50,29 +51,33 @@ var doc4 = {
 		}
 	}
 }
-var destroy = denodify(Pouch.destroy);
-var create = denodify(Pouch);
 Pouch.plugin('Search',require('../pouchdb.search'));
-describe('pouch search',function(){
-	describe('function',function(){
-		it('basic',function(done){
-			destroy('dbbasic').then(function(){
-        return create('dbbasic');
-      },function(){
-        return create('dbbasic');
-      }).then(function(db){
-        var put = denodify(db.put);
-        return put(doc1).then(function(){
-          return put(doc2);
-        }).then(function(){
-          return put(doc3);
-        }).then(function(){
-          return put(doc4);
-        }).then(function(){
-          return denodify(db.search);
-        });
-      }).then(function(search){
-        return search(function(doc){
+
+describe('search',function(){
+
+function tests(name,root){
+describe(name,function(){
+  this.timeout(8000);
+   var db;
+    var i = 0;
+beforeEach(function(done){
+  i++;
+  Pouch(root + 'dbbasic' + i,function(err,d){
+    db = d;
+    db.bulkDocs({docs:[doc1,doc2,doc3,doc4]},function(){
+      done();
+    })
+  });
+});
+afterEach(function(done){
+  db = undefined;
+  Pouch.destroy(root + 'dbbasic' + i,function(){
+    done();
+  });
+});
+if(name === 'level'){
+it('basic',function(done){
+        db.search(function(doc){
           if(doc.desc){
             index('default',doc.desc);
           }
@@ -80,34 +85,18 @@ describe('pouch search',function(){
           result.total_rows.should.equal(1);
           result.rows[0].id.should.equal('c240s10A');
           return;
-        });
       }).then(done,done);
     });
-		it('should work with a doc',function(done){
-			create('dbbasic').then(function(db){
-        return denodify(db.search);
-      }).then(function(search){
-        return search("find/things",{q:'freehold'}).then(function(result){
-          result.total_rows.should.equal(2);
-          result.rows.map(function(v){
-            return v.id;
-          }).should.deep.equal(["c240s10A","c240s1"]);
-          return;
-        });
-      }).then(done,done);
-    });
-    it('should work with an updated doc',function(done){
-      create('dbbasic').then(function(db){
+}
+    it('should work with an removed doc',function(done){
+     
         var get = denodify(db.get);
         var put = denodify(db.put);
-        return get('c240s1').then(function(doc){
-          doc.text = 'no';
-          return db.put(doc);
-        }).then(function(){
-          return denodify(db.search);
-        });
-      }).then(function(search){
-        return search("find/things",{q:'freehold'}).then(function(result){
+        var remove = denodify(db.remove);
+        get('c240s1').then(function(doc){
+        return remove(doc);
+      }).then(function(){
+          return db.search("find/things",{q:'freehold'}).then(function(result){
           result.total_rows.should.equal(1);
           result.rows.map(function(v){
             return v.id;
@@ -116,18 +105,43 @@ describe('pouch search',function(){
         });
       }).then(done,done);
     });
+it('should work with a doc',function(done){
+        db.search("find/things",{q:'freehold'}).then(function(result){
+          result.total_rows.should.equal(2);
+          result.rows.map(function(v){
+            return v.id;
+          }).should.deep.equal(["c240s10A","c240s1"]);
+          return;
+        }).then(done,done);
+    });
+    it('should work with an updated doc',function(done){
+      var get = denodify(db.get);
+      var put = denodify(db.put);
+      get('c240s1').then(function(doc){
+        doc.text = 'no';
+        return put(doc);
+      }).then(function(){
+          return db.search("find/things",{q:'freehold'}).then(function(result){
+          result.total_rows.should.equal(1);
+          result.rows.map(function(v){
+            return v.id;
+          }).should.deep.equal(["c240s10A"]);
+          return;
+        });
+      }).then(done,done);
+    });
+
     it('should work with a more complex thing',function(done){
-      create('dbbasic').then(function(db){
-        return db.search;
-      }).then(function(search){
-        return search("find/things",{q:'title:rem'}).then(function(result){
+        db.search("find/things",{q:'title:rem'}).then(function(result){
           result.total_rows.should.equal(1);
           result.rows.map(function(v){
             return v.id;
           }).should.deep.equal(["c240s10"]);
           return;
-        });
       }).then(done,done);
-    });;
+    });
   });
+}
+tests('level','');
+tests('cloadant',root);
 });
