@@ -159,10 +159,6 @@ function httpQuery(name, opts) {
     });
   }
   this.search = function(name, opts, callback){
-    if (typeof opts === 'function') {
-      callback = opts;
-      opts = {};
-    }
     var resp = query(name,opts);
     if(typeof callback === 'function'){
       return resp.then(function(answer){

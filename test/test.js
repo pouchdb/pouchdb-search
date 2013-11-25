@@ -57,12 +57,16 @@ describe('search',function(){
 
 function tests(name,root){
 describe(name,function(){
-  this.timeout(8000);
+  this.timeout(100000);
    var db;
     var i = 0;
 beforeEach(function(done){
   i++;
   Pouch(root + 'dbbasic' + i,function(err,d){
+    if(err){
+      console.log(err);
+      return done(err);
+    }
     db = d;
     db.bulkDocs({docs:[doc1,doc2,doc3,doc4]},function(){
       done();
@@ -81,11 +85,11 @@ it('basic',function(done){
           if(doc.desc){
             index('default',doc.desc);
           }
-        },{q:'land'}).then(function(result){
+        },{q:'land'},function(_,result){
           result.total_rows.should.equal(1);
           result.rows[0].id.should.equal('c240s10A');
-          return;
-      }).then(done,done);
+          done(_);
+      });
     });
 }
     it('should work with an removed doc',function(done){
