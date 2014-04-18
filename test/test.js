@@ -94,8 +94,8 @@ describe('search', function() {
                     }, {
                         q: 'land'
                     }, function(_, result) {
-                        result.total_rows.should.equal(1);
-                        result.rows[0].id.should.equal('c240s10A');
+                        expect(result.rows.length).to.equal(1);
+                        expect(result.rows[0].id).to.equal('c240s10A');
                         done(_);
                     });
                 });
@@ -162,6 +162,6 @@ describe('search', function() {
             });
         });
     }
-    // tests('level', '');
+    tests('level', '');
     tests('cloudant', root);
 });
