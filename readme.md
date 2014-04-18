@@ -1,9 +1,13 @@
 pouchdb search
 ===
 
+```
+$ npm install pouchdb-search
+```
+
 ```javascript
 var Pouch = require('pouchdb');
-Pouch.plugin('Search',require('./pouchdb.search'));
+Pouch.plugin({'search': require('pouchdb-search').search});
 
 var db = Pouch('name');
 db.search(func,options,callback);
