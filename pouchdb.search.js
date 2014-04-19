@@ -9,8 +9,6 @@ function lunrfunc() {
     this.ref('id');
 };
 
-var Search = function() {};
-
 function viewQuery(db, fun, indexes, options) {
     return lie(function(yes, no) {
         indexes.
@@ -167,7 +165,7 @@ function query(db, name, opts) {
     });
 }
 
-Search.search = function(name, opts, callback) {
+module.exports = function(name, opts, callback) {
     var db = this;
 
     var resp = query(db, name, opts);
@@ -179,5 +177,3 @@ Search.search = function(name, opts, callback) {
         return resp;
     }
 }
-
-module.exports = Search;
