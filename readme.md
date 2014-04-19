@@ -7,7 +7,7 @@ $ npm install pouchdb-search
 
 ```javascript
 var Pouch = require('pouchdb');
-Pouch.plugin({'search': require('pouchdb-search').search});
+Pouch.plugin({'search': require('pouchdb-search')});
 
 var db = Pouch('name');
 db.search(func,options,callback);
