@@ -49,9 +49,9 @@ var doc4 = {
             }.toString()
         }
     }
-}
+};
 Pouch.plugin({
-    'search': require('../pouchdb.search').search
+    'search': require('../pouchdb.search')
 });
 
 describe('search', function() {
