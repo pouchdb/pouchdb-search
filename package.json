@@ -17,6 +17,9 @@
     "lie": "~2.3.0",
     "pouchdb-collate": "0.1.0"
   },
+  "peerDependencies": {
+    "pouchdb": "^2.1.2"
+  },
   "devDependencies": {
     "chai": "~1.8.1",
     "mocha": "~1.14.0",
