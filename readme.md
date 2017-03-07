@@ -1,6 +1,8 @@
 pouchdb search
 ===
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/pouchdb/pouchdb-search.svg)](https://greenkeeper.io/)
+
 ```
 $ npm install pouchdb-search
 ```
